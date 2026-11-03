@@ -4,7 +4,7 @@ import type {
 } from '../../../src/shared/github/pull-request-types'
 import { translate } from '../i18n/mobile-i18n'
 import { resolveGitHubPRMergeState } from '../../../src/shared/github/pull-request-merge-state'
-import { getProviderChecksLabel } from '../../../src/shared/provider-check-summary'
+import { getProviderChecksLabel } from '../../../src/shared/source-control/checks/provider-check-summary'
 
 export type MobileHostedReviewStatus = {
   state?: string

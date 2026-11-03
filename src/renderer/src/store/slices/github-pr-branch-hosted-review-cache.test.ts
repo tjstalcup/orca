@@ -8,7 +8,7 @@ import {
   resetRemoteRuntimeMocks
 } from './github-slice-test-harness'
 import type { AppState } from '../types'
-import type { HostedReviewInfo } from '../../../../shared/hosted-review'
+import type { HostedReviewInfo } from '../../../../shared/source-control/hosted-review/hosted-review-contracts'
 import { getHostedReviewCacheKey } from './hosted-review-cache-identity'
 
 describe('createGitHubSlice.fetchPRForBranch', () => {

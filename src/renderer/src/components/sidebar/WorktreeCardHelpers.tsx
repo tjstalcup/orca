@@ -1,5 +1,5 @@
 import React from 'react'
-import type { GitConflictOperation } from '../../../../shared/git-status-types'
+import type { GitConflictOperation } from '../../../../shared/git/status/git-status-types'
 import type { CheckStatus } from '../../../../shared/github/pull-request-types'
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
 import { translate } from '@/i18n/i18n'

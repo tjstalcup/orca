@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { WorkspaceAttachment } from './worktree/types'
-import type { HostedReviewState } from './hosted-review'
+import type { HostedReviewState } from './source-control/hosted-review/hosted-review-contracts'
 import { getWorkspaceAttachmentKey } from './workspace-attachment-normalization'
 import {
   summarizeWorkspaceReviewChecks,

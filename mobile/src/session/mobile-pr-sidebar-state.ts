@@ -66,7 +66,10 @@ export type PrSidebarLoadDeps = {
     worktreeId: string,
     args: { branch: string; linkedGitHubPR?: number | null }
   ) => Promise<
-    GitHubPrReadOutcome<import('../../../src/shared/hosted-review').HostedReviewInfo | null>
+    GitHubPrReadOutcome<
+      | import('../../../src/shared/source-control/hosted-review/hosted-review-contracts').HostedReviewInfo
+      | null
+    >
   >
   // Resolve persisted links in parallel so closed/merged PRs add no serial read.
   fetchWorktreeGitHubPRLink: (worktreeId: string) => Promise<WorktreeGitHubPRLink>

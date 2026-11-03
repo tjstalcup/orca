@@ -11,11 +11,14 @@ import {
 import { Button } from '@/components/ui/button'
 import type { PRCheckDetail } from '../../../../../shared/github/check-types'
 import type { ConflictReview } from './conflict-summary'
-import { summarizeProviderChecks } from '../../../../../shared/provider-check-summary'
+import { summarizeProviderChecks } from '../../../../../shared/source-control/checks/provider-check-summary'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import { CHECK_COLOR } from './check-presentation'
-import { getBrokenChecks, isBrokenCheck } from '../../../../../shared/pr-checks-fix-prompt'
+import {
+  getBrokenChecks,
+  isBrokenCheck
+} from '../../../../../shared/source-control/checks/pr-checks-fix-prompt'
 
 export function PRTriageStrip({
   review,

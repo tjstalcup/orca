@@ -7,7 +7,7 @@ import {
   classifyCheckOutcome,
   summarizeProviderChecks,
   type CheckOutcome as SharedCheckOutcome
-} from '../../../../src/shared/provider-check-summary'
+} from '../../../../src/shared/source-control/checks/provider-check-summary'
 import { prStateToken } from '../pr-state-token'
 import { translate } from '../../i18n/mobile-i18n'
 

@@ -1,6 +1,6 @@
 import type { CheckStatus, ProviderCheckSummary } from './github/pull-request-types'
-import type { HostedReviewState } from './hosted-review'
-import { resolveProviderCheckState } from './provider-check-summary'
+import type { HostedReviewState } from './source-control/hosted-review/hosted-review-contracts'
+import { resolveProviderCheckState } from './source-control/checks/provider-check-summary'
 import type { WorkspaceAttachment } from './worktree/types'
 import {
   getWorkspaceAttachmentKey,
