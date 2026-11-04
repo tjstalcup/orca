@@ -9,6 +9,16 @@ function openVoiceSettings(): void {
   useAppStore.getState().openSettingsPage()
 }
 
+export function showDictationNoModelToast(): void {
+  toast('No speech model selected. Download one in Settings > Voice.', {
+    id: 'dictation-no-model',
+    action: {
+      label: translate('auto.components.dictation.DictationController.bb7f599ee7', 'Open Settings'),
+      onClick: openVoiceSettings
+    }
+  })
+}
+
 export function showDictationStartErrorToast(message: string): void {
   const hostMessage = hostDictationErrorMessage(compactIpcErrorMessage(message) ?? '')
   if (hostMessage) {

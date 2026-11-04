@@ -17181,7 +17181,6 @@
       "dictation": {
         "DictationController": {
           "de136f1199": "Speech error: {{value0}}",
-          "7afff43472": "Dictation finished, but no text field was focused.",
           "55127a3706": "Dictation failed: {{value0}}",
           "bb7f599ee7": "Open Settings",
           "2d5b9fabf9": "Microphone access denied. Grant access in system settings, then restart Orca.",
@@ -20863,6 +20862,16 @@
         "usageLimitContinueSearchLimit": "usage limit",
         "usageLimitContinueSearchReset": "reset",
         "usageLimitContinueToggleLabel": "Toggle continuing chats when a usage limit resets"
+      },
+      "VoicePane": {
+        "autoCopyTranscript": "Auto-copy Uninserted Transcript",
+        "autoCopyTranscriptDescription": "Automatically copy transcript to clipboard if no text field was focused or available.",
+        "rescueAutoHide": "Transcript Pill Dismissal",
+        "rescueAutoHideDescription": "Choose how long the ready-to-copy transcript pill stays visible.",
+        "rescueStayOpen": "Stay open",
+        "rescue5s": "5s",
+        "rescue10s": "10s",
+        "rescue30s": "30s"
       }
     },
     "agentChildRow": {
@@ -21724,7 +21733,8 @@
   },
   "common": {
     "retry": "Retry",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "close": "Close"
   },
   "terminal": {
     "sessionSaveFailure": {
@@ -23694,5 +23704,11 @@
   },
   "checks": {
     "rerunUnsuccessful": "Rerun unsuccessful"
+  },
+  "dictation": {
+    "readyToCopy": "Ready to Copy",
+    "quotedPreview": "“{{preview}}”",
+    "copied": "Copied",
+    "copyTranscript": "Copy transcript"
   }
 }

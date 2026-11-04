@@ -11,15 +11,21 @@ import {
 import { formatFinalTranscriptSegment } from '../../../../shared/dictation-transcript-spacing'
 import { recordStoppedSession, waitForStoppedSession } from './dictation-stopped-sessions'
 import { translate } from '@/i18n/i18n'
-import { showDictationStartErrorToast } from './dictation-start-error-toast'
+import {
+  showDictationNoModelToast,
+  showDictationStartErrorToast
+} from './dictation-start-error-toast'
 import { useHoldDictationGesture } from './use-hold-dictation-gesture'
-import { DICTATION_CONTROL_EVENT, type DictationControlAction } from './dictation-control-events'
+import { useDictationControlEvents } from './use-dictation-control-events'
 import { publishDictationMeter } from './dictation-meter-store'
+import { handleDictationRescue } from './dictation-rescue'
 
 export function DictationController() {
   const dictationState = useAppStore((s) => s.dictationState)
   const setDictationState = useAppStore((s) => s.setDictationState)
   const setPartialTranscript = useAppStore((s) => s.setPartialTranscript)
+  const setRescuedTranscript = useAppStore((s) => s.setRescuedTranscript)
+  const dismissDictationRescue = useAppStore((s) => s.dismissDictationRescue)
   const recordFeatureInteraction = useAppStore((s) => s.recordFeatureInteraction)
   const settings = useAppStore((s) => s.settings)
   const keybindings = useAppStore((s) => s.keybindings)
@@ -81,34 +87,24 @@ export function DictationController() {
       if (activeSessionIdRef.current === sessionId) {
         activeSessionIdRef.current = null
       }
-      dictationStateRef.current = 'idle'
-      setDictationState('idle')
+      if (useAppStore.getState().dictationState !== 'ready-to-copy') {
+        dictationStateRef.current = 'idle'
+        setDictationState('idle')
+      }
       setPartialTranscript('')
     },
     [setDictationState, setPartialTranscript, stopCapture, getCapturedChunkCount]
   )
 
   const startDictation = useCallback(async () => {
-    if (dictationStateRef.current !== 'idle') {
+    if (dictationStateRef.current !== 'idle' && dictationStateRef.current !== 'ready-to-copy') {
       return
     }
+    dismissDictationRescue()
 
     const modelId = settings?.voice?.sttModel
     if (!modelId) {
-      toast('No speech model selected. Download one in Settings > Voice.', {
-        // Held keys and repeated presses replace this toast instead of stacking it.
-        id: 'dictation-no-model',
-        action: {
-          label: translate(
-            'auto.components.dictation.DictationController.bb7f599ee7',
-            'Open Settings'
-          ),
-          onClick: () => {
-            useAppStore.getState().openSettingsTarget({ pane: 'voice', repoId: null })
-            useAppStore.getState().openSettingsPage()
-          }
-        }
-      })
+      showDictationNoModelToast()
       return
     }
 
@@ -248,7 +244,8 @@ export function DictationController() {
     finishDictationSession,
     drainStoppedSession,
     setPartialTranscript,
-    recordFeatureInteraction
+    recordFeatureInteraction,
+    dismissDictationRescue
   ])
 
   const stopDictation = useCallback(async () => {
@@ -274,56 +271,12 @@ export function DictationController() {
   // Capture opens before stopDictation exists; bridge through a ref to avoid cyclic callback dependencies.
   stopDictationRef.current = () => void stopDictation()
 
-  // Toggle mode uses intercepted main IPC so the chord cannot reach xterm or system shortcuts.
-  useEffect(() => {
-    const mode = settings?.voice?.dictationMode ?? 'toggle'
-    if (mode !== 'toggle') {
-      return
-    }
-
-    const handleKeyDown = (): void => {
-      if (!settings?.voice?.enabled || dictationStateRef.current === 'stopping') {
-        return
-      }
-      if (dictationStateRef.current === 'listening' || dictationStateRef.current === 'starting') {
-        void stopDictation()
-      } else {
-        void startDictation()
-      }
-    }
-
-    const cleanup = window.api.ui.onDictationKeyDown(handleKeyDown)
-    return cleanup
-  }, [settings?.voice?.dictationMode, settings?.voice?.enabled, startDictation, stopDictation])
-
-  useEffect(() => {
-    const canDictate = (): boolean => Boolean(settings?.voice?.enabled)
-    const handleControl = (event: Event): void => {
-      if (!canDictate() || dictationStateRef.current === 'stopping') {
-        return
-      }
-      const action = (event as CustomEvent<DictationControlAction>).detail
-      if (action === 'start') {
-        if (dictationStateRef.current === 'idle') {
-          void startDictation()
-        }
-        return
-      }
-      if (action === 'stop') {
-        if (dictationStateRef.current === 'listening' || dictationStateRef.current === 'starting') {
-          void stopDictation()
-        }
-        return
-      }
-      if (dictationStateRef.current === 'listening' || dictationStateRef.current === 'starting') {
-        void stopDictation()
-      } else {
-        void startDictation()
-      }
-    }
-    document.addEventListener(DICTATION_CONTROL_EVENT, handleControl)
-    return () => document.removeEventListener(DICTATION_CONTROL_EVENT, handleControl)
-  }, [settings?.voice?.enabled, startDictation, stopDictation])
+  useDictationControlEvents({
+    dictationStateRef,
+    settings,
+    startDictation,
+    stopDictation
+  })
 
   useHoldDictationGesture({
     dictationStateRef,
@@ -351,20 +304,28 @@ export function DictationController() {
       setPartialTranscript('')
       finalTranscriptReceivedRef.current = true
       const target = insertionTargetRef.current
+      const textToProcess = data.text
+      let inserted = false
       if (target) {
         const textToInsert = formatFinalTranscriptSegment(
-          data.text,
+          textToProcess,
           insertedFinalTranscriptRef.current
         )
-        insertText(textToInsert, target)
-        insertedFinalTranscriptRef.current += textToInsert
-      } else if (!intentionalTargetCancellationRef.current) {
-        toast.message(
-          translate(
-            'auto.components.dictation.DictationController.7afff43472',
-            'Dictation finished, but no text field was focused.'
-          )
-        )
+        const result = insertText(textToInsert, target)
+        if (result.success) {
+          inserted = true
+          insertedFinalTranscriptRef.current += textToInsert
+        }
+      }
+      if (!inserted) {
+        handleDictationRescue({
+          text: textToProcess,
+          insertedText: insertedFinalTranscriptRef.current,
+          intentionalCancellation: intentionalTargetCancellationRef.current,
+          autoCopy: Boolean(settings?.voice?.dictationAutoCopyToClipboard),
+          setRescuedTranscript,
+          setDictationState
+        })
       }
     })
 
@@ -411,7 +372,14 @@ export function DictationController() {
       cleanupStopped()
       cleanupError()
     }
-  }, [setPartialTranscript, setDictationState, stopCapture, discardBufferedAudio])
+  }, [
+    setPartialTranscript,
+    setDictationState,
+    setRescuedTranscript,
+    stopCapture,
+    discardBufferedAudio,
+    settings?.voice?.dictationAutoCopyToClipboard
+  ])
 
   return <DictationIndicator />
 }

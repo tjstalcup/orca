@@ -19165,7 +19165,6 @@
       "dictation": {
         "DictationController": {
           "de136f1199": "Erro de fala: {{value0}}",
-          "7afff43472": "O ditado terminou, mas nenhum campo de texto estava em foco.",
           "55127a3706": "Falha no ditado: {{value0}}",
           "bb7f599ee7": "Abrir Configurações",
           "2d5b9fabf9": "Acesso ao microfone negado. Conceda acesso nas configurações do sistema e reinicie o Orca.",

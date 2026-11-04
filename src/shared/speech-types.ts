@@ -55,7 +55,13 @@ export type SpeechErrorEvent = {
   sessionId: string
 }
 
-export type DictationState = 'idle' | 'starting' | 'listening' | 'stopping' | 'error'
+export type DictationState =
+  | 'idle'
+  | 'starting'
+  | 'listening'
+  | 'stopping'
+  | 'error'
+  | 'ready-to-copy'
 
 export type UserModelConfig = {
   id: string
@@ -79,4 +85,8 @@ export type VoiceSettings = {
   microphoneDeviceId: string | null
   /** Cached label for display when the preferred device is unplugged */
   microphoneDeviceLabel: string | null
+  /** Automatically copy transcript to clipboard when target input is unavailable */
+  dictationAutoCopyToClipboard?: boolean
+  /** Auto-hide delay in milliseconds for rescued transcript pill (0 = stay open until dismissed) */
+  dictationRescueAutoHideDelayMs?: number
 }

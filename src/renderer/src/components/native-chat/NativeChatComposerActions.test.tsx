@@ -211,6 +211,34 @@ describe('NativeChatComposerActions', () => {
     }
   )
 
+  it.each([false, true])(
+    'a press on dictation preserves focus (isDictating: %s)',
+    (isDictating) => {
+      render(
+        <NativeChatComposerActions
+          attachDisabled={false}
+          dictationDisabled={false}
+          sendDisabled={false}
+          isWorking={false}
+          isDictating={isDictating}
+          isDictationHoldMode={false}
+          onAttach={vi.fn()}
+          onDictationToggle={vi.fn()}
+          onDictationHoldStart={vi.fn()}
+          onDictationHoldEnd={vi.fn()}
+          onSend={vi.fn()}
+          sessionOptionsSurface={null}
+          sessionOptionsSnapshot={[]}
+        />
+      )
+
+      const button = screen.getByRole('button', {
+        name: isDictating ? 'Stop dictation' : 'Start dictation'
+      })
+      expect(fireEvent.mouseDown(button)).toBe(false)
+    }
+  )
+
   it('says on the disabled send button what to do to send', () => {
     render(
       <NativeChatComposerActions

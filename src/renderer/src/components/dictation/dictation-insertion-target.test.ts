@@ -121,4 +121,37 @@ describe('dictation insertion target', () => {
     expect(beforeInputEvents).toHaveLength(0)
     expect(editor.textContent).toBe('')
   })
+
+  it('rejects insertion with target-unavailable when textarea has lost focus (#26712)', () => {
+    const textarea = appendTextarea()
+    const other = document.createElement('div')
+    other.tabIndex = 0
+    document.body.appendChild(other)
+    other.focus()
+
+    const result = insertText('hello world', { kind: 'text', element: textarea })
+    expect(result).toEqual({ success: false, reason: 'target-unavailable' })
+    expect(textarea.value).toBe('')
+  })
+
+  it('allows transcript insertion when stop button prevents focus loss on mouseDown (#37839)', async () => {
+    const textarea = appendTextarea()
+    const button = document.createElement('button')
+    button.addEventListener('mousedown', (e) => e.preventDefault())
+    document.body.appendChild(button)
+
+    // Simulate clicking button while textarea is focused
+    const mouseDown = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+    button.dispatchEvent(mouseDown)
+    if (!mouseDown.defaultPrevented) {
+      button.focus()
+    }
+
+    // Textarea remains activeElement because default was prevented
+    expect(document.activeElement).toBe(textarea)
+    const result = insertText('dictated sentence', { kind: 'text', element: textarea })
+    expect(result).toEqual({ success: true })
+    await Promise.resolve()
+    expect(textarea.value).toBe('dictated sentence')
+  })
 })

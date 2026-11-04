@@ -175,6 +175,7 @@ export const NativeChatComposerActions = memo(function NativeChatComposerActions
           size="icon-sm"
           aria-label={dictationLabel}
           disabled={dictationDisabled}
+          onMouseDown={(event) => event.preventDefault()}
           onClick={isDictationHoldMode ? undefined : onDictationToggle}
           onPointerDown={(event) => {
             if (!isDictationHoldMode || dictationDisabled) {

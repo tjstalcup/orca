@@ -16897,7 +16897,6 @@
       "dictation": {
         "DictationController": {
           "de136f1199": "Konuşma hatası: {{value0}}",
-          "7afff43472": "Dikte tamamlandı, ancak odaklanılmış bir metin alanı yoktu.",
           "55127a3706": "Dikte tamamlanamadı: {{value0}}",
           "bb7f599ee7": "Ayarları Aç",
           "2d5b9fabf9": "Mikrofon erişimi reddedildi. Sistem ayarlarından erişim verin, ardından Orca'yı yeniden başlatın.",

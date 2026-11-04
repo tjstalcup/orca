@@ -16,6 +16,10 @@ export type DictationInsertionTarget =
   | { kind: 'text'; element: HTMLInputElement | HTMLTextAreaElement }
   | { kind: 'contentEditable'; element: HTMLElement }
 
+export type DictationInsertionResult =
+  | { success: true }
+  | { success: false; reason: 'target-unavailable' }
+
 const composerTargets = new WeakMap<HTMLElement, (text: string) => void>()
 
 /** Capture a draft destination so a late transcript can follow an inline edit's hand-back. */
@@ -76,10 +80,17 @@ function readFocusedInsertionTarget(): DictationInsertionTarget | null {
   return null
 }
 
-export function insertText(text: string, target: DictationInsertionTarget): void {
+export function insertText(
+  text: string,
+  target: DictationInsertionTarget
+): DictationInsertionResult {
   if (target.kind === 'composer') {
-    target.insert(text)
-    return
+    try {
+      target.insert(text)
+      return { success: true }
+    } catch {
+      return { success: false, reason: 'target-unavailable' }
+    }
   }
   if (target.kind === 'terminal') {
     document.dispatchEvent(
@@ -87,25 +98,31 @@ export function insertText(text: string, target: DictationInsertionTarget): void
         detail: { text, tabId: target.tabId, paneId: target.paneId }
       })
     )
-    return
+    return { success: true }
   }
 
   if (target.kind === 'text') {
     const element = target.element
-    if (!element.isConnected) {
-      return
+    if (!element.isConnected || element.ownerDocument.activeElement !== element) {
+      return { success: false, reason: 'target-unavailable' }
     }
     void pasteTextIntoTextControl(element, text, {
       source: 'programmatic',
       inputType: 'insertText',
       canContinue: (candidate) => candidate.ownerDocument.activeElement === candidate
     }).catch(() => {})
-    return
+    return { success: true }
   }
 
   if (target.kind === 'contentEditable') {
+    if (!isContentEditableDictationTargetCurrent(target.element)) {
+      return { success: false, reason: 'target-unavailable' }
+    }
     void insertTextIntoContentEditableTarget(target.element, text).catch(() => {})
+    return { success: true }
   }
+
+  return { success: false, reason: 'target-unavailable' }
 }
 
 function findClosestEditorElement(element: HTMLElement): HTMLElement | null {

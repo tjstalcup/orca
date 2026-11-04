@@ -5,10 +5,13 @@ import type { DictationState, SpeechModelState } from '../../../../shared/speech
 export type DictationSlice = {
   dictationState: DictationState
   partialTranscript: string
+  rescuedTranscript: string | null
   activeModelId: string | null
   modelStates: SpeechModelState[]
   setDictationState: (state: DictationState) => void
   setPartialTranscript: (text: string) => void
+  setRescuedTranscript: (text: string | null) => void
+  dismissDictationRescue: () => void
   setActiveModelId: (id: string | null) => void
   setModelStates: (states: SpeechModelState[]) => void
   refreshModelStates: () => Promise<void>
@@ -42,11 +45,14 @@ export const createDictationSlice: StateCreator<AppState, [], [], DictationSlice
   return {
     dictationState: 'idle',
     partialTranscript: '',
+    rescuedTranscript: null,
     activeModelId: null,
     modelStates: [],
 
     setDictationState: (state) => set({ dictationState: state }),
     setPartialTranscript: (text) => set({ partialTranscript: text }),
+    setRescuedTranscript: (text) => set({ rescuedTranscript: text }),
+    dismissDictationRescue: () => set({ dictationState: 'idle', rescuedTranscript: null }),
     setActiveModelId: (id) => set({ activeModelId: id }),
     setModelStates,
 
