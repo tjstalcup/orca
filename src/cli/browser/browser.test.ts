@@ -313,6 +313,96 @@ describe('orca cli browser page targeting', () => {
       { timeoutMs: 60_000 }
     )
   })
+
+  describe('tab create worktree resolution (#37899)', () => {
+    it('prefers explicit --worktree flag over managed cwd and ORCA_WORKTREE_ID', async () => {
+      queueFixtures(callMock, okFixture('req_create', { browserPageId: 'page-explicit' }))
+      vi.spyOn(console, 'log').mockImplementation(() => {})
+      vi.stubEnv('ORCA_WORKTREE_ID', 'repo-env::/tmp/repo/env')
+
+      await main(
+        [
+          'tab',
+          'create',
+          '--url',
+          'https://example.com',
+          '--worktree',
+          'explicit-target',
+          '--json'
+        ],
+        '/tmp/repo/feature'
+      )
+
+      expect(callMock).toHaveBeenCalledOnce()
+      expect(callMock).toHaveBeenCalledWith(
+        'browser.tabCreate',
+        { url: 'https://example.com', worktree: 'explicit-target' },
+        { timeoutMs: 60_000 }
+      )
+    })
+
+    it('prefers managed cwd over ORCA_WORKTREE_ID when inside a worktree', async () => {
+      const cwdWorktree = buildWorktree('/tmp/repo/feature', 'feature/foo')
+      const envWorktree = buildWorktree('/tmp/repo/env', 'feature/env')
+      queueFixtures(
+        callMock,
+        worktreeListFixture([cwdWorktree, envWorktree]),
+        okFixture('req_create', { browserPageId: 'page-managed' })
+      )
+      vi.spyOn(console, 'log').mockImplementation(() => {})
+      vi.stubEnv('ORCA_WORKTREE_ID', envWorktree.id)
+
+      await main(['tab', 'create', '--url', 'https://example.com', '--json'], '/tmp/repo/feature')
+
+      expect(callMock).toHaveBeenNthCalledWith(
+        2,
+        'browser.tabCreate',
+        { url: 'https://example.com', worktree: `id:${cwdWorktree.id}` },
+        { timeoutMs: 60_000 }
+      )
+    })
+
+    it('falls back to ORCA_WORKTREE_ID when cwd is not in a managed worktree', async () => {
+      const envWorktree = buildWorktree('/Users/me/GitHub/personal', 'main')
+      queueFixtures(
+        callMock,
+        worktreeListFixture([envWorktree]),
+        okFixture('req_create', { browserPageId: 'page-env' })
+      )
+      vi.spyOn(console, 'log').mockImplementation(() => {})
+      vi.stubEnv('ORCA_WORKTREE_ID', envWorktree.id)
+
+      await main(['tab', 'create', '--url', 'https://example.com', '--json'], '/tmp')
+
+      expect(callMock).toHaveBeenNthCalledWith(
+        2,
+        'browser.tabCreate',
+        { url: 'https://example.com', worktree: `id:${envWorktree.id}` },
+        { timeoutMs: 60_000 }
+      )
+    })
+
+    it('fails with an explicit error when cwd is unmanaged and ORCA_WORKTREE_ID is unset', async () => {
+      const knownWorktree = buildWorktree('/Users/me/GitHub/personal', 'main')
+      queueFixtures(callMock, worktreeListFixture([knownWorktree]))
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      delete process.env.ORCA_WORKTREE_ID
+      delete process.env.ORCA_WORKSPACE_ID
+
+      await main(['tab', 'create', '--url', 'https://example.com'], '/tmp')
+
+      expect(callMock).toHaveBeenCalledOnce()
+      expect(callMock).toHaveBeenCalledWith('worktree.list', { limit: 10_000 })
+      expect(callMock).not.toHaveBeenCalledWith(
+        'browser.tabCreate',
+        expect.anything(),
+        expect.anything()
+      )
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('No Orca-managed worktree contains the current directory:')
+      )
+    })
+  })
 })
 
 describe('orca cli browser identity', () => {
